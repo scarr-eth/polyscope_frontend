@@ -46,31 +46,31 @@ function Skeleton({ className = '' }) {
 }
 
 // Bookmarks: localStorage key 'polyscope_bookmarks'
-function useBookmarks(){
-  const [bookmarks, setBookmarks] = useState(()=>{
-    try{
+function useBookmarks() {
+  const [bookmarks, setBookmarks] = useState(() => {
+    try {
       return JSON.parse(localStorage.getItem('polyscope_bookmarks') || '[]')
-    }catch{ return [] }
+    } catch { return [] }
   })
-  const save = (bm)=>{
+  const save = (bm) => {
     setBookmarks(bm)
     localStorage.setItem('polyscope_bookmarks', JSON.stringify(bm))
   }
-  const toggle = (marketId)=>{
-    save(bookmarks.includes(marketId) 
-      ? bookmarks.filter(id=>id!==marketId)
+  const toggle = (marketId) => {
+    save(bookmarks.includes(marketId)
+      ? bookmarks.filter(id => id !== marketId)
       : [...bookmarks, marketId])
   }
   return { bookmarks, toggle, save }
 }
 
 // Toast notifications
-function useToast(){
-  const [toasts,setToasts] = useState([])
-  const add = (message, type='info')=>{
+function useToast() {
+  const [toasts, setToasts] = useState([])
+  const add = (message, type = 'info') => {
     const id = Date.now()
-    setToasts(t=>[...t,{id,message,type}])
-    setTimeout(()=>setToasts(t=>t.filter(x=>x.id!==id)), 4000)
+    setToasts(t => [...t, { id, message, type }])
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 4000)
   }
   return { toasts, add }
 }
@@ -101,8 +101,8 @@ function Sidebar({ open, bookmarks, bookmarkList, onSelectBookmark, onCloseSideb
             {bookmarks.length === 0 ? (
               <div>No bookmarks yet</div>
             ) : (
-              bookmarkList.map((m,i)=>(
-                <button key={i} onClick={()=>{onSelectBookmark(m); onCloseSidebar()}} className="nav-link block w-full text-left px-2 py-1 rounded hover:bg-slate-800 truncate text-slate-300 hover:text-white transition">
+              bookmarkList.map((m, i) => (
+                <button key={i} onClick={() => { onSelectBookmark(m); onCloseSidebar() }} className="nav-link block w-full text-left px-2 py-1 rounded hover:bg-slate-800 truncate text-slate-300 hover:text-white transition">
                   {m.title}
                 </button>
               ))
@@ -117,11 +117,11 @@ function Sidebar({ open, bookmarks, bookmarkList, onSelectBookmark, onCloseSideb
   )
 }
 
-function Toast({ toasts }){
+function Toast({ toasts }) {
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2 pointer-events-none">
-      {toasts.map(t=>(
-        <div key={t.id} className={`px-4 py-2 rounded text-white pointer-events-auto ${t.type==='error'?'bg-red-500':t.type==='success'?'bg-green-500':'bg-blue-500'} animate-in fade-in slide-in-from-top-2`}>
+      {toasts.map(t => (
+        <div key={t.id} className={`px-4 py-2 rounded text-white pointer-events-auto ${t.type === 'error' ? 'bg-red-500' : t.type === 'success' ? 'bg-green-500' : 'bg-blue-500'} animate-in fade-in slide-in-from-top-2`}>
           {t.message}
         </div>
       ))}
@@ -141,46 +141,46 @@ function Footer() {
 }
 
 function MarketsPage({ searchTerm, onSearch, onOpenModal }) {
-  const [categories,setCategories] = useState([])
-  const [activeCategory,setActiveCategory] = useState('')
-  const [markets,setMarkets] = useState([])
-  const [page,setPage] = useState(1)
-  const [loading,setLoading] = useState(true)
-  const [error,setError] = useState('')
+  const [categories, setCategories] = useState([])
+  const [activeCategory, setActiveCategory] = useState('')
+  const [markets, setMarkets] = useState([])
+  const [page, setPage] = useState(1)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [retryCount, setRetryCount] = useState(0)
-  
+
   const debouncedSearch = useDebounce(searchTerm, 300)
   const limit = 15
 
-  useEffect(()=>{
+  useEffect(() => {
     let cancel = false
-    async function loadCategories(){
+    async function loadCategories() {
       try {
         const trending = await marketsAPI.trending({ limit: 50 })
         if (!cancel && trending.markets) {
-          const cats = Array.from(new Set(trending.markets.map(m=>m.category).filter(Boolean)))
-          setCategories(cats.slice(0,5))
+          const cats = Array.from(new Set(trending.markets.map(m => m.category).filter(Boolean)))
+          setCategories(cats.slice(0, 5))
         }
-      } catch(e){
+      } catch (e) {
         console.error('Failed to load categories:', e)
       }
     }
     loadCategories()
-    return ()=>{ cancel = true }
-  },[])
+    return () => { cancel = true }
+  }, [])
 
-  useEffect(()=>{
+  useEffect(() => {
     let cancelled = false
-    async function load(){
+    async function load() {
       try {
         setLoading(true)
         setError('')
-        const params = { limit, offset: (page-1)*limit }
+        const params = { limit, offset: (page - 1) * limit }
         if (debouncedSearch) params.search = debouncedSearch
         if (activeCategory) params.category = activeCategory
         const data = await marketsAPI.list(params)
         if (!cancelled) setMarkets(data.markets || [])
-      } catch(e){
+      } catch (e) {
         if (!cancelled) {
           setError(e.message || 'Failed to load markets. Please try again.')
           setMarkets([])
@@ -190,8 +190,8 @@ function MarketsPage({ searchTerm, onSearch, onOpenModal }) {
       }
     }
     load()
-    return ()=>{ cancelled = true }
-  },[debouncedSearch, activeCategory, page, retryCount])
+    return () => { cancelled = true }
+  }, [debouncedSearch, activeCategory, page, retryCount])
 
   return (
     <div className="p-3 sm:p-5 lg:p-6 space-y-4">
@@ -200,14 +200,14 @@ function MarketsPage({ searchTerm, onSearch, onOpenModal }) {
           <span className="text-slate-400 text-sm">🔍</span>
           <input
             value={searchTerm}
-            onChange={(e)=>onSearch(e.target.value)}
+            onChange={(e) => onSearch(e.target.value)}
             className="flex-1 bg-transparent outline-none text-sm placeholder:text-slate-500"
             placeholder="Search markets"
             aria-label="Search markets"
           />
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {['Featured','Newest','Volume','Trending','Ending','Open'].map((label)=> (
+          {['Featured', 'Newest', 'Volume', 'Trending', 'Ending', 'Open'].map((label) => (
             <button key={label} className="px-3 py-1.5 rounded-full text-xs sm:text-sm bg-slate-900 border border-slate-800 hover:border-indigo-500 hover:text-white transition">{label}</button>
           ))}
         </div>
@@ -215,15 +215,15 @@ function MarketsPage({ searchTerm, onSearch, onOpenModal }) {
 
       {categories.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {categories.map((c)=> (
-            <button key={c} onClick={()=>{setActiveCategory(c); setPage(1)}} className={`px-3 py-1.5 rounded-full text-xs sm:text-sm whitespace-nowrap transition flex-shrink-0 ${activeCategory===c? 'bg-indigo-600 text-white':'bg-slate-900 border border-slate-800 text-slate-200 hover:border-slate-600'}`} aria-pressed={activeCategory===c}>{c}</button>
+          {categories.map((c) => (
+            <button key={c} onClick={() => { setActiveCategory(c); setPage(1) }} className={`px-3 py-1.5 rounded-full text-xs sm:text-sm whitespace-nowrap transition flex-shrink-0 ${activeCategory === c ? 'bg-indigo-600 text-white' : 'bg-slate-900 border border-slate-800 text-slate-200 hover:border-slate-600'}`} aria-pressed={activeCategory === c}>{c}</button>
           ))}
         </div>
       )}
 
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-5 mt-2">
-          {Array(6).fill(0).map((_, i)=>(
+          {Array(6).fill(0).map((_, i) => (
             <div key={i} className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3 card-shadow">
               <Skeleton className="h-36 w-full rounded-xl" />
               <Skeleton className="h-5 w-3/4" />
@@ -236,7 +236,7 @@ function MarketsPage({ searchTerm, onSearch, onOpenModal }) {
         <div className="mt-4 p-4 bg-red-900/20 border border-red-500 rounded text-red-300 text-sm">
           <div className="font-semibold">Error loading markets</div>
           <div className="mt-1">{error}</div>
-          <button onClick={()=>{setRetryCount(c=>c+1); setPage(1)}} className="mt-2 px-3 py-1 rounded bg-red-600 hover:bg-red-700 transition text-white text-xs">Retry</button>
+          <button onClick={() => { setRetryCount(c => c + 1); setPage(1) }} className="mt-2 px-3 py-1 rounded bg-red-600 hover:bg-red-700 transition text-white text-xs">Retry</button>
         </div>
       ) : markets.length === 0 ? (
         <div className="mt-8 text-center text-slate-400">
@@ -245,10 +245,10 @@ function MarketsPage({ searchTerm, onSearch, onOpenModal }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-5 mt-2">
-          {markets.map((m)=> (
-            <button key={m.marketId || m.id} onClick={()=>onOpenModal(m)} className="text-left rounded-2xl bg-slate-900 border border-slate-800 p-3 sm:p-4 hover:border-indigo-500 hover:bg-slate-800 transition active:scale-95 card-shadow" aria-label={`View prediction for ${m.title}`}>
+          {markets.map((m) => (
+            <button key={m.marketId || m.id} onClick={() => onOpenModal(m)} className="text-left rounded-2xl bg-slate-900 border border-slate-800 p-3 sm:p-4 hover:border-indigo-500 hover:bg-slate-800 transition active:scale-95 card-shadow" aria-label={`View prediction for ${m.title}`}>
               <div className="relative h-40 w-full rounded-xl overflow-hidden bg-gradient-to-br from-slate-800 to-slate-700 mb-3">
-                <div className="absolute inset-0 opacity-60" style={{backgroundImage:'radial-gradient(circle at 30% 30%, rgba(99,102,241,0.35), transparent 40%), radial-gradient(circle at 70% 0%, rgba(0,212,255,0.25), transparent 45%)'}} />
+                <div className="absolute inset-0 opacity-60" style={{ backgroundImage: 'radial-gradient(circle at 30% 30%, rgba(99,102,241,0.35), transparent 40%), radial-gradient(circle at 70% 0%, rgba(0,212,255,0.25), transparent 45%)' }} />
                 <div className="absolute top-3 left-3 px-2 py-1 rounded-full bg-black/50 text-xs flex items-center gap-1 border border-white/10">
                   <span className="text-green-400">●</span>
                   Live
@@ -263,15 +263,15 @@ function MarketsPage({ searchTerm, onSearch, onOpenModal }) {
                 <span>YES</span><span className="text-slate-400">NO</span>
               </div>
               <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden mb-2">
-                <div className="h-full bg-gradient-to-r from-green-400 to-emerald-500" style={{width: `${m.yesProbability || 58}%`}} />
+                <div className="h-full bg-gradient-to-r from-green-400 to-emerald-500" style={{ width: `${m.yesProbability || 58}%` }} />
               </div>
               <div className="flex items-center justify-between text-xs text-slate-400 mb-3">
                 <span className="text-green-400 font-semibold">{m.yesProbability || 58}%</span>
                 <span className="text-fuchsia-400 font-semibold">{m.noProbability || 42}%</span>
               </div>
               <div className="flex items-center gap-3 text-xs text-slate-400">
-                <span className="flex items-center gap-1">💰 {m.liquidityFormatted || `$${(m.liquidity||0).toLocaleString()}`}</span>
-                <span className="flex items-center gap-1">📈 {m.volume24hFormatted || `$${(m.volume24h||0).toLocaleString()}`}</span>
+                <span className="flex items-center gap-1">💰 {m.liquidityFormatted || `$${(m.liquidity || 0).toLocaleString()}`}</span>
+                <span className="flex items-center gap-1">📈 {m.volume24hFormatted || `$${(m.volume24h || 0).toLocaleString()}`}</span>
                 <span className="flex items-center gap-1">⏰ {m.expiryDate || m.expiry || 'N/A'}</span>
               </div>
             </button>
@@ -281,35 +281,35 @@ function MarketsPage({ searchTerm, onSearch, onOpenModal }) {
 
       {!loading && markets.length > 0 && (
         <div className="mt-6 flex justify-center gap-2 flex-wrap">
-          <button disabled={page===1} onClick={()=>setPage(p=>Math.max(1,p-1))} className="px-3 py-1 rounded-full bg-slate-900 border border-slate-700 text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:border-indigo-500 transition text-xs sm:text-sm" aria-label="Previous page">Prev</button>
+          <button disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))} className="px-3 py-1 rounded-full bg-slate-900 border border-slate-700 text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed hover:border-indigo-500 transition text-xs sm:text-sm" aria-label="Previous page">Prev</button>
           <span className="px-3 py-1 text-slate-300 text-xs sm:text-sm">Pg {page}</span>
-          <button onClick={()=>setPage(p=>p+1)} className="px-3 py-1 rounded-full bg-slate-900 border border-slate-700 text-slate-200 hover:border-indigo-500 transition text-xs sm:text-sm" aria-label="Next page">Next</button>
+          <button onClick={() => setPage(p => p + 1)} className="px-3 py-1 rounded-full bg-slate-900 border border-slate-700 text-slate-200 hover:border-indigo-500 transition text-xs sm:text-sm" aria-label="Next page">Next</button>
         </div>
       )}
 
       <div className="max-w-4xl mx-auto mt-8 sm:mt-10 p-4 sm:p-6 rounded-2xl bg-slate-900 border border-slate-800 card-shadow">
         <h3 className="text-white font-semibold mb-3 text-sm sm:text-base">Get Prediction Updates</h3>
-        <EmailSubscribeForm/>
+        <EmailSubscribeForm />
       </div>
     </div>
   )
 }
 
-function EmailSubscribeForm(){
-  const [email,setEmail] = useState('')
-  const [immediate,setImmediate] = useState(false)
-  const [daily,setDaily] = useState(false)
-  const [status,setStatus] = useState('')
+function EmailSubscribeForm() {
+  const [email, setEmail] = useState('')
+  const [immediate, setImmediate] = useState(false)
+  const [daily, setDaily] = useState(false)
+  const [status, setStatus] = useState('')
   const [error, setError] = useState('')
-  const [loading,setLoading] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const emailError = email && !isValidEmail(email) ? 'Invalid email address' : ''
 
-  async function submit(e){
+  async function submit(e) {
     e.preventDefault()
     if (emailError) return
-    
-    try{
+
+    try {
       setLoading(true)
       setError('')
       setStatus('')
@@ -319,21 +319,21 @@ function EmailSubscribeForm(){
       setEmail('')
       setImmediate(false)
       setDaily(false)
-    }catch(e){
+    } catch (e) {
       setError(e.message || 'Subscription failed. Please try again.')
-    }finally{ 
-      setLoading(false) 
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-2 sm:gap-3">
       <div>
-        <input 
-          value={email} 
-          onChange={(e)=>setEmail(e.target.value)} 
+        <input
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           className={`w-full px-2 sm:px-3 py-2 rounded bg-slate-800 border text-xs sm:text-sm text-white transition ${emailError ? 'border-red-500' : 'border-slate-700 focus:border-[#6366f1]'} focus:outline-none`}
-          placeholder="Enter your email" 
+          placeholder="Enter your email"
           type="email"
           disabled={loading}
           aria-label="Email address"
@@ -341,19 +341,19 @@ function EmailSubscribeForm(){
         {emailError && <div className="text-red-400 text-xs mt-1">{emailError}</div>}
       </div>
       <label className="flex items-center gap-2 text-xs sm:text-sm text-slate-300 cursor-pointer hover:text-white transition">
-        <input type="checkbox" checked={immediate} onChange={(e)=>setImmediate(e.target.checked)} disabled={loading} aria-label="Immediate alerts"/>
+        <input type="checkbox" checked={immediate} onChange={(e) => setImmediate(e.target.checked)} disabled={loading} aria-label="Immediate alerts" />
         <span className="line-clamp-2">Email alerts for high-confidence predictions</span>
       </label>
       <label className="flex items-center gap-2 text-xs sm:text-sm text-slate-300 cursor-pointer hover:text-white transition">
-        <input type="checkbox" checked={daily} onChange={(e)=>setDaily(e.target.checked)} disabled={loading} aria-label="Daily digest"/>
+        <input type="checkbox" checked={daily} onChange={(e) => setDaily(e.target.checked)} disabled={loading} aria-label="Daily digest" />
         <span className="line-clamp-2">Daily digest of top 5 predictions</span>
       </label>
-      <button 
-        disabled={loading || !email || !!emailError} 
+      <button
+        disabled={loading || !email || !!emailError}
         type="submit"
         className="px-3 sm:px-4 py-2 rounded bg-[#6366f1] text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-indigo-700 transition text-xs sm:text-sm"
       >
-        {loading? 'Subscribing...' : 'Subscribe'}
+        {loading ? 'Subscribing...' : 'Subscribe'}
       </button>
       {error && <div className="text-red-400 text-xs sm:text-sm">{error}</div>}
       {status && <div className="text-green-400 text-xs sm:text-sm">{status}</div>}
@@ -361,25 +361,25 @@ function EmailSubscribeForm(){
   )
 }
 
-function PredictionModal({ market, onClose, bookmarks, onToggleBookmark }){
-  const [data,setData] = useState(null)
-  const [loading,setLoading] = useState(true)
-  const [error,setError] = useState('')
+function PredictionModal({ market, onClose, bookmarks, onToggleBookmark }) {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  useEffect(()=>{
-    let cancelled=false
-    async function load(){
-      try{
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      try {
         setLoading(true); setError('')
         const res = await predictionsAPI.predictAll(market.marketId || market.id, 'daily')
         if (!cancelled) setData(res)
-      }catch(e){
+      } catch (e) {
         if (!cancelled) setError(e.message || 'Failed to load prediction. Please try again.')
-      }finally{ if(!cancelled) setLoading(false) }
+      } finally { if (!cancelled) setLoading(false) }
     }
     if (market) load()
-    return ()=>{ cancelled=true }
-  },[market])
+    return () => { cancelled = true }
+  }, [market])
 
   if (!market) return null
 
@@ -390,14 +390,14 @@ function PredictionModal({ market, onClose, bookmarks, onToggleBookmark }){
       <div className="absolute inset-0 bg-black/60" onClick={onClose} role="presentation" />
       <div className="relative bg-slate-900 border border-slate-700 rounded-lg w-full max-w-2xl mx-4 p-4 animate-in slide-in-from-bottom-4 max-h-96 overflow-y-auto">
         <div className="absolute top-2 right-2 flex gap-2">
-          <button 
-            className={`text-xl transition ${isBookmarked ? 'text-yellow-400' : 'text-slate-300 hover:text-white'}`} 
-            onClick={()=>onToggleBookmark(market.marketId || market.id)}
+          <button
+            className={`text-xl transition ${isBookmarked ? 'text-yellow-400' : 'text-slate-300 hover:text-white'}`}
+            onClick={() => onToggleBookmark(market.marketId || market.id)}
             aria-label={`${isBookmarked ? 'Remove from' : 'Add to'} bookmarks`}
             title={`${isBookmarked ? 'Remove from' : 'Add to'} bookmarks`}
           >★</button>
-          <button 
-            className="text-slate-300 hover:text-white transition" 
+          <button
+            className="text-slate-300 hover:text-white transition"
             onClick={onClose}
             aria-label="Close prediction modal"
             title="Close"
@@ -412,19 +412,19 @@ function PredictionModal({ market, onClose, bookmarks, onToggleBookmark }){
           <div className="space-y-3 text-slate-200">
             <div className="flex items-center justify-between">
               <span className="font-bold">Prediction:</span>
-              <span className={`${data.prediction==='YES' ? 'text-green-400' : 'text-red-400'} text-lg font-semibold`}>{data.prediction}</span>
+              <span className={`${data.prediction === 'YES' ? 'text-green-400' : 'text-red-400'} text-lg font-semibold`}>{data.prediction}</span>
             </div>
             <div>
               <div className="flex justify-between mb-1"><span>Confidence</span><span className="font-semibold">{data.confidence}%</span></div>
-              <div className="w-full bg-slate-800 rounded h-2"><div className="bg-[#6366f1] h-2 rounded" style={{width: `${data.confidence||0}%`}}/></div>
+              <div className="w-full bg-slate-800 rounded h-2"><div className="bg-[#6366f1] h-2 rounded" style={{ width: `${data.confidence || 0}%` }} /></div>
             </div>
             <div>
               <div className="text-sm">YES Probability: {data.yes_probability}%</div>
-              <div className="w-full bg-slate-800 rounded h-2"><div className="bg-green-500 h-2 rounded" style={{width: `${data.yes_probability||0}%`}}/></div>
+              <div className="w-full bg-slate-800 rounded h-2"><div className="bg-green-500 h-2 rounded" style={{ width: `${data.yes_probability || 0}%` }} /></div>
             </div>
             <div>
               <div className="text-sm">NO Probability: {data.no_probability}%</div>
-              <div className="w-full bg-slate-800 rounded h-2"><div className="bg-red-500 h-2 rounded" style={{width: `${data.no_probability||0}%`}}/></div>
+              <div className="w-full bg-slate-800 rounded h-2"><div className="bg-red-500 h-2 rounded" style={{ width: `${data.no_probability || 0}%` }} /></div>
             </div>
             {data.reason && <div className="text-sm"><strong>Reason:</strong> {data.reason}</div>}
             {data.notes && <div className="text-xs text-slate-400"><strong>Notes:</strong> {data.notes}</div>}
@@ -435,12 +435,12 @@ function PredictionModal({ market, onClose, bookmarks, onToggleBookmark }){
   )
 }
 
-function StatsPage(){
-  const [stats,setStats] = useState(null)
-  const [loading,setLoading] = useState(true)
+function StatsPage() {
+  const [stats, setStats] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  useEffect(()=>{
-    setTimeout(()=>{
+  useEffect(() => {
+    setTimeout(() => {
       setStats({
         bullishWinRate: 62,
         bearishWinRate: 58,
@@ -449,7 +449,7 @@ function StatsPage(){
       })
       setLoading(false)
     }, 500)
-  },[])
+  }, [])
 
   return (
     <div className="p-4 text-white">
@@ -480,7 +480,7 @@ function StatsPage(){
   )
 }
 
-function AboutPage(){
+function AboutPage() {
   return (
     <div className="p-4 text-white max-w-2xl">
       <h1 className="text-3xl font-bold mb-4">About Polyscope</h1>
@@ -498,7 +498,7 @@ function AboutPage(){
   )
 }
 
-function FAQPage(){
+function FAQPage() {
   const faqs = [
     {
       q: 'How accurate are the predictions?',
@@ -525,7 +525,7 @@ function FAQPage(){
     <div className="p-4 text-white max-w-2xl">
       <h1 className="text-3xl font-bold mb-6">Frequently Asked Questions</h1>
       <div className="space-y-2">
-        {faqs.map((faq,i)=>(
+        {faqs.map((faq, i) => (
           <details key={i} className="bg-slate-900 border border-slate-700 p-4 rounded cursor-pointer">
             <summary className="font-semibold text-slate-200 hover:text-white">{faq.q}</summary>
             <p className="mt-2 text-slate-400 text-sm">{faq.a}</p>
@@ -536,7 +536,7 @@ function FAQPage(){
   )
 }
 
-function PageContainer({ children }){
+function PageContainer({ children }) {
   const location = useLocation()
   // simple CSS-based transition using classes
   return (
@@ -546,78 +546,78 @@ function PageContainer({ children }){
   )
 }
 
-export default function App(){
-  const [sidebarOpen,setSidebarOpen] = useState(false)
-  const [searchTerm,setSearchTerm] = useState('')
-  const [modalMarket,setModalMarket] = useState(null)
+export default function App() {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [modalMarket, setModalMarket] = useState(null)
   const { bookmarks, toggle } = useBookmarks()
   const { toasts, add: addToast } = useToast()
   const [bookmarkList, setBookmarkList] = useState([])
 
   // Load bookmarked markets when bookmarks change
-  useEffect(()=>{
-    async function load(){
-      try{
+  useEffect(() => {
+    async function load() {
+      try {
         const list = await Promise.all(
-          bookmarks.map(id=>marketsAPI.get(id).catch(()=>null))
+          bookmarks.map(id => marketsAPI.get(id).catch(() => null))
         )
         setBookmarkList(list.filter(Boolean))
-      }catch(e){ 
+      } catch (e) {
         console.error('Failed to load bookmarks:', e)
       }
     }
     if (bookmarks.length) load()
     else setBookmarkList([])
-  },[bookmarks])
+  }, [bookmarks])
 
-  // Force dark theme baseline
-  useEffect(()=>{
+  // Force dark theme baseline, not needed???
+  useEffect(() => {
     document.documentElement.classList.add('dark')
     document.body.className = 'bg-[#0f0f1e]'
-  },[])
+  }, [])
 
   // Close sidebar on route change
   const location = useLocation()
-  useEffect(()=>{
+  useEffect(() => {
     setSidebarOpen(false)
-  },[location.pathname])
+  }, [location.pathname])
 
   return (
     <ErrorBoundary>
       <div className="min-h-screen w-screen flex flex-col overflow-x-hidden app-bg text-slate-100">
-        <Header onToggleSidebar={()=>setSidebarOpen(!sidebarOpen)} />
+        <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
         <div className="flex flex-1 relative overflow-hidden">
-          {sidebarOpen && <div className="fixed inset-0 bg-black/60 md:hidden z-40" onClick={()=>setSidebarOpen(false)} role="presentation" />}
-          <Sidebar 
-            open={sidebarOpen} 
-            bookmarks={bookmarks} 
-            bookmarkList={bookmarkList} 
-            onSelectBookmark={m=>setModalMarket(m)} 
-            onCloseSidebar={()=>setSidebarOpen(false)} 
+          {sidebarOpen && <div className="fixed inset-0 bg-black/60 md:hidden z-40" onClick={() => setSidebarOpen(false)} role="presentation" />}
+          <Sidebar
+            open={sidebarOpen}
+            bookmarks={bookmarks}
+            bookmarkList={bookmarkList}
+            onSelectBookmark={m => setModalMarket(m)}
+            onCloseSidebar={() => setSidebarOpen(false)}
           />
           <main className="flex-1 bg-[#0f0f1e] w-full overflow-y-auto">
             <PageContainer>
               <Routes>
                 <Route path="/" element={<Navigate to="/markets" replace />} />
-                <Route path="/markets" element={<MarketsPage searchTerm={searchTerm} onSearch={setSearchTerm} onOpenModal={(m)=>setModalMarket(m)} />} />
-                <Route path="/stats" element={<StatsPage/>} />
-                <Route path="/about" element={<AboutPage/>} />
-                <Route path="/faq" element={<FAQPage/>} />
+                <Route path="/markets" element={<MarketsPage searchTerm={searchTerm} onSearch={setSearchTerm} onOpenModal={(m) => setModalMarket(m)} />} />
+                <Route path="/stats" element={<StatsPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/faq" element={<FAQPage />} />
               </Routes>
             </PageContainer>
           </main>
         </div>
-        <Footer/>
+        <Footer />
         <Toast toasts={toasts} />
         {modalMarket && (
-          <PredictionModal 
-            market={modalMarket} 
-            onClose={()=>setModalMarket(null)} 
-            bookmarks={bookmarks} 
-            onToggleBookmark={(id)=>{
+          <PredictionModal
+            market={modalMarket}
+            onClose={() => setModalMarket(null)}
+            bookmarks={bookmarks}
+            onToggleBookmark={(id) => {
               toggle(id)
               addToast(`${bookmarks.includes(id) ? 'Removed from' : 'Added to'} bookmarks`, 'success')
-            }} 
+            }}
           />
         )}
       </div>
